@@ -1,0 +1,13 @@
+name: watcher
+version: 0.1.0
+
+authors:
+  - Tudor <tudor@marghidanu.com>
+
+targets:
+  watcher:
+    main: src/watcher.cr
+
+crystal: 1.2.1
+
+license: MIT

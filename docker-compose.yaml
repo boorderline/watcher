@@ -1,0 +1,9 @@
+version: "2.7"
+
+services:
+  watcher:
+    build: .
+    environment:
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./config-examples:/opt/watcher/config

@@ -1,0 +1,29 @@
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ "ubuntu-latest", "macos-latest" ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Download source
+        uses: actions/checkout@v2
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+      
+      - name: Install shards
+        run: shards install
+      
+      - name: Check formatting
+        run: crystal tool format --check
+
+      - name: Build
+        run: shards build --release --no-debug --static

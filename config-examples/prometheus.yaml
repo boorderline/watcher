@@ -1,0 +1,13 @@
+version: "1"
+
+name: Prometheus
+scrape_config:
+  interval: 45
+
+source:
+  repository: https://prometheus-community.github.io/helm-charts
+  chart: prometheus
+
+target:
+  name: prometheus
+  namespace: monitoring

@@ -1,0 +1,25 @@
+version: "1"
+
+jobs:
+  main:
+    executor: local
+    needs:
+      - build
+
+  build:
+    executor: local
+    commands:
+      - shards build -Dpreview_mt
+    needs:
+      - lint
+      - test
+
+  test:
+    executor: local
+    commands:
+      - crystal spec
+
+  lint:
+    executor: local
+    commands:
+      - ameba
