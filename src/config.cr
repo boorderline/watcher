@@ -26,6 +26,12 @@ module Watcher::Config
     @[YAML::Field(key: "repository")]
     getter repository : String
 
+    @[YAML::Field(key: "repository_username")]
+    getter repository_username : String?
+
+    @[YAML::Field(key: "repository_password")]
+    getter repository_password : String?
+
     @[YAML::Field(key: "chart")]
     getter chart : String
   end
@@ -39,17 +45,18 @@ module Watcher::Config
     @[YAML::Field(key: "namespace")]
     getter namespace : String
 
-    # TODO: Add support for values.yaml
+    @[YAML::Field(key: "create_namespace")]
+    getter create_namespace : Bool = false
+
+    @[YAML::Field(key: "values")]
+    getter values : YAML::Any?
   end
 
   struct Scrape
     include YAML::Serializable
 
     @[YAML::Field(key: "interval")]
-    getter interval : UInt32 = 30
-
-    @[YAML::Field(key: "headers")]
-    getter headers : Hash(String, String)?
+    getter interval : UInt32 = 30 # seconds ...
   end
 
   def self.load_from_dir(dir : String) : Array(App)
