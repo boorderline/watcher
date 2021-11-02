@@ -1,11 +1,9 @@
 require "log"
-require "uri"
-require "http/client"
 require "http/server"
 require "option_parser"
 
 require "./config"
-require "./helm/*"
+require "./helm"
 
 module Watcher
   VERSION = "0.1.0"
@@ -19,63 +17,43 @@ module Watcher
     end
 
     def run
-      helm = Watcher::Helm::Client.new(@config.target.namespace)
+      Log.info { "Starting watcher for: #{@config.name}" }
+      helm = Watcher::Helm::Client.new
 
       loop do
-        Log.info { "Starting watcher for: #{@config.name}" }
-
-        # Managing custom and additional headers
-        headers = HTTP::Headers{
-          "User-Agent" => "BoordCD/#{Watcher::VERSION}",
-        }
-
-        unless @config.scrape.headers.nil?
-          headers.merge!(@config.scrape.headers.as(Hash(String, String)))
-        end
-
         begin
-          repository = URI.parse(@config.source.repository)
-            .resolve("index.yaml")
+          latest_entry = helm.get_latest_chart(
+            chart: @config.source.chart,
+            repo: @config.source.repository,
+            username: @config.source.repository_username,
+            password: @config.source.repository_password,
+          )
 
-          HTTP::Client.get(repository, headers) do |response|
-            raise "Response not OK: #{response.status_code}" unless response.success?
+          # Check if deployment exists
+          latest_release = helm.list_releases(@config.target.namespace)
+            .find { |r| r.name == @config.target.name }
+          latest_version = latest_release.nil? ? "" : latest_release.extract_chart_version(@config.source.chart)
 
-            body = response.body_io.gets_to_end
-            manifest = Watcher::Helm::Manifest.from_yaml(body)
+          if latest_version != latest_entry.version
+            Log.info { "New release for #{@config.target.name} at version #{latest_entry.version}" }
 
-            if !manifest.entries.has_key?(@config.source.chart)
-              Log.warn { "Chart #{@config.source.chart} not found!" }
-              next
-            end
+            # TODO: Check additional rules. Probably we need to define them.
 
-            if manifest.entries[@config.source.chart].empty?
-              Log.warn { "Chart #{@config.source.chart} has no entries!" }
-              next
-            end
+            result = helm.deploy(
+              release: @config.target.name,
+              chart: @config.source.chart,
+              version: latest_entry.version,
+              repo: @config.source.repository,
+              username: @config.source.repository_username,
+              password: @config.source.repository_password,
+              namespace: @config.target.namespace,
+              create_namespace: @config.target.create_namespace,
+            )
 
-            latest_entry = manifest.entries[@config.source.chart]
-              .sort { |a, b| b.created <=> a.created }
-              .first
-
-            # Check if deployment exists
-            latest_release = helm.list_releases.find { |r| r.name == @config.target.name }
-            latest_version = latest_release.nil? ? "" : latest_release.extract_chart_version(@config.source.chart)
-
-            if latest_version != latest_entry.version
-              Log.info { "New release for #{@config.target.name} at version #{latest_entry.version}" }
-
-              # TODO: Check additional rules. Probably we need to define them.
-
-              result = helm.deploy(
-                name: @config.target.name,
-                chart: @config.source.chart,
-                repository: @config.source.repository,
-                version: latest_entry.version,
-              )
-
-              Log.info { "Successfully deployed #{@config.target.name} at revision #{result.version}" }
-            end
+            Log.info { "Successfully deployed #{@config.target.name} at revision #{result.version}" }
           end
+
+          # TODO: Also check if the values have changed and trigger a new release if so ...
         rescue ex
           Log.error { ex.message }
         end
@@ -89,9 +67,7 @@ module Watcher
 end
 
 begin
-  Log.setup_from_env(
-    default_sources: "watcher.*"
-  )
+  Log.setup
 
   config_dir = nil
   OptionParser.parse do |parser|
@@ -106,18 +82,21 @@ begin
     parser.invalid_option { |flag| raise "Unkown flag: #{flag}" }
   end
 
-  raise "Missing configuration directory!" if config_dir.nil?
-  raise "Directory #{config_dir} doesn't exist!" if !Dir.exists?(config_dir.as(String))
-  Log.debug { "Configuration directory: #{config_dir}" }
+  if config_dir.nil?
+    raise "Missing configuration directory!"
+  end
 
-  # Load all application configurations from the config directory...
+  if !Dir.exists?(config_dir.as(String))
+    raise "Directory #{config_dir} doesn't exist!"
+  end
+
   apps = Watcher::Config.load_from_dir(config_dir.as(String))
-  Log.debug { "Total configurations loaded: #{apps.size}" }
-  raise "Did dot find any configurations. Exiting..." if apps.empty?
+  Log.info { "Loaded #{apps.size} configurations from #{config_dir}" }
 
-  # TODO: Check max apps limit!
+  if apps.empty?
+    raise "Did dot find any configurations. Exiting..."
+  end
 
-  # Otherwise we start a watcher for each configuration on separate fiber...
   apps.each { |config| spawn Watcher::Application.new(config).run }
 
   # ... Starting a webserver to display some info.
