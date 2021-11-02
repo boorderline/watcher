@@ -38,6 +38,7 @@ module Watcher
             Log.info { "New release for #{@config.target.name} at version #{latest_entry.version}" }
 
             # TODO: Check additional rules. Probably we need to define them.
+            values = @config.target.values.nil? ? nil : YAML.dump(@config.target.values)
 
             result = helm.deploy(
               release: @config.target.name,
@@ -48,6 +49,7 @@ module Watcher
               password: @config.source.repository_password,
               namespace: @config.target.namespace,
               create_namespace: @config.target.create_namespace,
+              values: values,
             )
 
             Log.info { "Successfully deployed #{@config.target.name} at revision #{result.version}" }

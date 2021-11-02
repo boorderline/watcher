@@ -19,7 +19,8 @@ module Watcher::Helm
 
     def deploy(release : String, chart : String, version : String,
                repo : String, username : String? = nil, password : String? = nil,
-               namespace = "default", create_namespace = false)
+               namespace = "default", create_namespace = false,
+               values : String? = nil)
       opts = {
         "version"   => version,
         "repo"      => repo,
@@ -31,6 +32,12 @@ module Watcher::Helm
       opts["username"] = username unless username.nil?
       opts["password"] = password unless password.nil?
       opts["create-namespace"] = nil if create_namespace
+
+      unless values.nil?
+        values_file = File.tempfile
+        File.write(values_file.path, values.as(String))
+        opts["values"] = values_file.path
+      end
 
       output = execute_command(["upgrade", release, chart], opts)
       Client::Deploy.from_json(output)
