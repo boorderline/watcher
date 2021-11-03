@@ -1,18 +1,8 @@
 # watcher
 
-TODO: Write a description here
+[![CI](https://github.com/boorderline/watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/boorderline/watcher/actions/workflows/ci.yml)
 
-## Installation
-
-TODO: Write installation instructions here
-
-## Usage
-
-TODO: Write usage instructions here
-
-## Development
-
-TODO: Write development instructions here
+Helm based continuous delivery tool
 
 ## Contributing
 
