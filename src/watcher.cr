@@ -7,7 +7,7 @@ require "./application"
 module Watcher
   VERSION = "0.1.0"
 
-  def self.run_workers(config_dir : String)
+  def self.run_workers(config_dir : String?)
     if config_dir.nil?
       raise "Missing configuration directory!"
     end
