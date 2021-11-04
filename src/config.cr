@@ -18,49 +18,50 @@ module Watcher::Config
 
     @[YAML::Field(key: "target")]
     getter target : Target
-  end
 
-  struct Source
-    include YAML::Serializable
+    struct Scrape
+      include YAML::Serializable
 
-    @[YAML::Field(key: "repository")]
-    getter repository : String
+      @[YAML::Field(key: "interval")]
+      getter interval : UInt32 = 30 # seconds ...
+    end
 
-    @[YAML::Field(key: "repository_username")]
-    getter repository_username : String?
+    struct Target
+      include YAML::Serializable
 
-    @[YAML::Field(key: "repository_password")]
-    getter repository_password : String?
+      @[YAML::Field(key: "name")]
+      getter name : String
 
-    @[YAML::Field(key: "chart")]
-    getter chart : String
-  end
+      @[YAML::Field(key: "namespace")]
+      getter namespace : String
 
-  struct Target
-    include YAML::Serializable
+      @[YAML::Field(key: "create_namespace")]
+      getter create_namespace : Bool = false
 
-    @[YAML::Field(key: "name")]
-    getter name : String
+      @[YAML::Field(key: "values")]
+      getter values : YAML::Any?
+    end
 
-    @[YAML::Field(key: "namespace")]
-    getter namespace : String
+    struct Source
+      include YAML::Serializable
 
-    @[YAML::Field(key: "create_namespace")]
-    getter create_namespace : Bool = false
+      @[YAML::Field(key: "repository")]
+      getter repository : String
 
-    @[YAML::Field(key: "values")]
-    getter values : YAML::Any?
-  end
+      @[YAML::Field(key: "repository_username")]
+      getter repository_username : String?
 
-  struct Scrape
-    include YAML::Serializable
+      @[YAML::Field(key: "repository_password")]
+      getter repository_password : String?
 
-    @[YAML::Field(key: "interval")]
-    getter interval : UInt32 = 30 # seconds ...
+      @[YAML::Field(key: "chart")]
+      getter chart : String
+    end
   end
 
   def self.load_from_dir(dir : String) : Array(App)
-    Dir.glob("#{dir}/*.{yaml,yml}").map do |file|
+    glob_path = Path.new(dir, "*.{yaml,yml}")
+    Dir.glob(glob_path, follow_symlinks: true).map do |file|
       File.open(Path[file].expand) { |f| App.from_yaml(f) }
     end
   end
