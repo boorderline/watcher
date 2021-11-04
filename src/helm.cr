@@ -45,23 +45,42 @@ module Watcher::Helm
 
     # TODO: Fix the 256 limit for the listing.
     def list_releases(namespace = "default")
-      output = execute_command(["list"], {
+      opts = {
         "namespace" => namespace,
         "output"    => "json",
-      })
+      }
+
+      output = execute_command(["list"], opts)
       Array(Client::Release).from_json(output)
     end
 
     def release_history(release_name : String, namespace = "default")
-      output = execute_command(["history", release_name], {
+      opts = {
         "namespace" => namespace,
         "output"    => "json",
-      })
+      }
+
+      output = execute_command(["history", release_name], opts)
       Array(Client::Revision).from_json(output)
     end
 
-    private def execute_command(params : Array(String), opts = Hash(String, String).new)
-      args = params.concat(opts.flat_map { |k, v| v.nil? ? ["--#{k}"] : ["--#{k}", v] })
+    def get_revision_values(release : String, revision = nil, namespace = "default", all = false)
+      opts = Hash(String, String?){
+        "namespace" => namespace,
+        "output"    => "yaml",
+      }
+
+      opts["all"] = nil if all
+      opts["revision"] = revision unless revision.nil?
+
+      output = execute_command(["get", "values", release], opts)
+      YAML.parse(output)
+    end
+
+    private def execute_command(params : Array(String), opts = Hash(String, String?).new)
+      args = params.concat(
+        opts.flat_map { |k, v| v.nil? ? ["--#{k}"] : ["--#{k}", v] }
+      )
 
       stdout = IO::Memory.new
       stderr = IO::Memory.new
@@ -135,37 +154,37 @@ module Watcher::Helm
     getter name : String
 
     @[JSON::Field(key: "info")]
-    getter info : Client::Deploy::Info
+    getter info : Info
 
     @[JSON::Field(key: "version")]
     getter version : UInt32
 
     @[JSON::Field(key: "namespace")]
     getter namespace : String
-  end
 
-  struct Client::Deploy::Info
-    include JSON::Serializable
+    struct Info
+      include JSON::Serializable
 
-    # TODO : Convert this to Time object
-    @[JSON::Field(key: "first_deployed")]
-    getter first_deployed : String
+      # TODO : Convert this to Time object
+      @[JSON::Field(key: "first_deployed")]
+      getter first_deployed : String
 
-    # TODO : Convert this to Time object
-    @[JSON::Field(key: "last_deployed")]
-    getter last_deployed : String
+      # TODO : Convert this to Time object
+      @[JSON::Field(key: "last_deployed")]
+      getter last_deployed : String
 
-    @[JSON::Field(key: "deleted")]
-    getter deleted : String
+      @[JSON::Field(key: "deleted")]
+      getter deleted : String
 
-    @[JSON::Field(key: "description")]
-    getter description : String
+      @[JSON::Field(key: "description")]
+      getter description : String
 
-    @[JSON::Field(key: "status")]
-    getter status : String
+      @[JSON::Field(key: "status")]
+      getter status : String
 
-    @[JSON::Field(key: "notes")]
-    getter notes : String
+      @[JSON::Field(key: "notes")]
+      getter notes : String
+    end
   end
 
   struct Client::Chart
@@ -198,20 +217,11 @@ module Watcher::Helm
     @[YAML::Field(key: "sources")]
     getter sources : Array(String)?
 
-    # dependencies: # A list of the chart requirements (optional)
-    #   - name: The name of the chart (nginx)
-    #     version: The version of the chart ("1.2.3")
-    #     repository: (optional) The repository URL ("https://example.com/charts") or alias ("@repo-name")
-    #     condition: (optional) A yaml path that resolves to a boolean, used for enabling/disabling charts (e.g. subchart1.enabled )
-    #     tags: # (optional)
-    #       - Tags can be used to group charts for enabling/disabling together
-    #     import-values: # (optional)
-    #       - ImportValues holds the mapping of source values to parent key to be imported. Each item can be a string or pair of child/parent sublist items.
-    #     alias: (optional) Alias to be used for the chart. Useful when you have to add the same chart multiple times
-    # maintainers: # (optional)
-    #   - name: The maintainers name (required for each maintainer)
-    #     email: The maintainers email (optional for each maintainer)
-    #     url: A URL for the maintainer (optional for each maintainer)
+    @[YAML::Field(key: "dependencies")]
+    getter dependencies : Array(Dependency)?
+
+    @[YAML::Field(key: "maintainers")]
+    getter maintainer : Array(Maintainer)?
 
     @[YAML::Field(key: "icon")]
     getter icon : String?
@@ -224,5 +234,41 @@ module Watcher::Helm
 
     @[YAML::Field(key: "annotations")]
     getter annotations : Hash(String, String)?
+
+    struct Maintainer
+      include YAML::Serializable
+
+      @[YAML::Field(key: "name")]
+      getter name : String
+
+      @[YAML::Field(key: "email")]
+      getter email : String?
+
+      @[YAML::Field(key: "url")]
+      getter url : String?
+    end
+
+    struct Dependency
+      include YAML::Serializable
+
+      @[YAML::Field(key: "name")]
+      getter name : String
+
+      @[YAML::Field(key: "version")]
+      getter version : String
+
+      @[YAML::Field(key: "repository")]
+      getter repository : String?
+
+      @[YAML::Field(key: "condition")]
+      getter condition : String?
+
+      @[YAML::Field(key: "tags")]
+      getter tags : Array(String)?
+
+      #     import-values: # (optional)
+      #       - ImportValues holds the mapping of source values to parent key to be imported. Each item can be a string or pair of child/parent sublist items.
+      #     alias: (optional) Alias to be used for the chart. Useful when you have to add the same chart multiple times
+    end
   end
 end
