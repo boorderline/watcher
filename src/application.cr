@@ -53,7 +53,7 @@ module Watcher
               namespace: @config.target.namespace,
             )
 
-            if release_values != @config.target.values
+            if !@config.target.values.nil? && (release_values != @config.target.values)
               Log.info { "Configuration changed for #{@config.target.name}, triggering re-deploy..." }
 
               @helm.deploy(
