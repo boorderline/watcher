@@ -39,6 +39,7 @@ module Watcher
   end
 
   def self.run_web
+    # TODO: Proper implementation
     server = HTTP::Server.new do |context|
       context.response.content_type = "text/plain"
       context.response.print "Hello world!"
@@ -53,8 +54,6 @@ end
 
 begin
   Log.setup
-
-  # TODO: Support configuration via environment variables (dotenv?)
 
   config_dir = nil
   interval = 30_u32
