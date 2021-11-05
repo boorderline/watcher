@@ -13,7 +13,7 @@ RUN shards build --release --static --no-debug
 
 FROM alpine:3.14
 
-RUN apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing helm kubectl
+RUN apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing helm
 
 COPY --from=build /opt/app/bin/watcher /usr/local/bin
 
