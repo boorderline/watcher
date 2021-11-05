@@ -1,8 +1,6 @@
 version: "1"
 
 name: Code Server
-scrape_config:
-  interval: 30
 
 source:
   repository: https://helm.kodelib.com/

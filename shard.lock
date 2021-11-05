@@ -1,2 +1,10 @@
 version: 2.0
-shards: {}
+shards:
+  future:
+    git: https://github.com/crystal-community/future.cr.git
+    version: 1.0.0
+
+  schedule:
+    git: https://github.com/hugoabonizio/schedule.cr.git
+    version: 0.2.2
+

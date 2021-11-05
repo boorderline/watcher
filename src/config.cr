@@ -10,21 +10,11 @@ module Watcher::Config
     @[YAML::Field(key: "name")]
     getter name : String
 
-    @[YAML::Field(key: "scrape_config")]
-    getter scrape : Scrape
-
     @[YAML::Field(key: "source")]
     getter source : Source
 
     @[YAML::Field(key: "target")]
     getter target : Target
-
-    struct Scrape
-      include YAML::Serializable
-
-      @[YAML::Field(key: "interval")]
-      getter interval : UInt32 = 30 # seconds ...
-    end
 
     struct Target
       include YAML::Serializable
@@ -56,13 +46,6 @@ module Watcher::Config
 
       @[YAML::Field(key: "chart")]
       getter chart : String
-    end
-  end
-
-  def self.load_from_dir(dir : String) : Array(App)
-    glob_path = Path.new(dir, "*.{yaml,yml}")
-    Dir.glob(glob_path, follow_symlinks: true).map do |file|
-      File.open(Path[file].expand) { |f| App.from_yaml(f) }
     end
   end
 end

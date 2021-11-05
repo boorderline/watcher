@@ -45,22 +45,18 @@ module Watcher::Helm
 
     # TODO: Fix the 256 limit for the listing.
     def list_releases(namespace = "default")
-      opts = {
+      output = execute_command(["list"], {
         "namespace" => namespace,
         "output"    => "json",
-      }
-
-      output = execute_command(["list"], opts)
+      })
       Array(Client::Release).from_json(output)
     end
 
     def release_history(release_name : String, namespace = "default")
-      opts = {
+      output = execute_command(["history", release_name], {
         "namespace" => namespace,
         "output"    => "json",
-      }
-
-      output = execute_command(["history", release_name], opts)
+      })
       Array(Client::Revision).from_json(output)
     end
 
@@ -85,10 +81,7 @@ module Watcher::Helm
       stdout = IO::Memory.new
       stderr = IO::Memory.new
       status = Process.run("helm", args: args, output: stdout, error: stderr, shell: true)
-
-      unless status.success?
-        raise stderr.to_s.chomp
-      end
+      raise stderr.to_s.chomp unless status.success?
 
       stdout.to_s
     end
@@ -106,7 +99,6 @@ module Watcher::Helm
     @[JSON::Field(key: "revision")]
     getter revision : String
 
-    # TODO : Convert this to Time object
     @[JSON::Field(key: "updated")]
     getter updated : String
 
@@ -130,7 +122,6 @@ module Watcher::Helm
     @[JSON::Field(key: "revision")]
     getter revision : UInt32
 
-    # TODO : Convert this to Time object
     @[JSON::Field(key: "updated")]
     getter updated : String
 
@@ -165,11 +156,9 @@ module Watcher::Helm
     struct Info
       include JSON::Serializable
 
-      # TODO : Convert this to Time object
       @[JSON::Field(key: "first_deployed")]
       getter first_deployed : String
 
-      # TODO : Convert this to Time object
       @[JSON::Field(key: "last_deployed")]
       getter last_deployed : String
 
@@ -265,10 +254,6 @@ module Watcher::Helm
 
       @[YAML::Field(key: "tags")]
       getter tags : Array(String)?
-
-      #     import-values: # (optional)
-      #       - ImportValues holds the mapping of source values to parent key to be imported. Each item can be a string or pair of child/parent sublist items.
-      #     alias: (optional) Alias to be used for the chart. Useful when you have to add the same chart multiple times
     end
   end
 end
