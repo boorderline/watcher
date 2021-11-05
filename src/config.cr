@@ -46,6 +46,9 @@ module Watcher::Config
 
       @[YAML::Field(key: "chart")]
       getter chart : String
+
+      @[YAML::Field(key: "prerelease")]
+      getter prerelease : Bool = true
     end
   end
 end

@@ -5,11 +5,13 @@ jobs:
     executor: local
     needs:
       - build
+    commands:
+      - ./bin/watcher -d ./config-examples -i 10
 
   build:
     executor: local
     commands:
-      - shards build -Dpreview_mt
+      - shards build
     needs:
       - lint
       - test

@@ -12,18 +12,13 @@ module Watcher
       raise "Directory #{config_dir} doesn't exist!"
     end
 
-    glob_path = Path.new(config_dir, "*.{yaml,yml}")
-    config_files = Dir.glob(glob_path, follow_symlinks: true).map do |f|
-      Path[f].expand.to_s
-    end
-    Log.info { "Loaded #{config_files.size} configurations from #{config_dir}" }
-
-    if config_files.empty?
-      raise "Did dot find any configurations. Exiting..."
-    end
-
     results = Channel(Int32).new
     loop do
+      glob_path = Path.new(config_dir, "*.{yaml,yml}")
+      config_files = Dir.glob(glob_path, follow_symlinks: true).map do |f|
+        Path[f].expand.to_s
+      end
+
       config_files.each do |c|
         config = File.open(c) { |f| Watcher::Config::App.from_yaml(f) }
         spawn name: config.name do
@@ -33,7 +28,6 @@ module Watcher
       end
 
       config_files.each { results.receive }
-
       sleep interval.seconds
     end
   end

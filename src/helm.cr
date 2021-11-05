@@ -1,5 +1,5 @@
-require "json"
 require "yaml"
+require "semantic_version"
 
 module Watcher::Helm
   class Client
@@ -20,18 +20,19 @@ module Watcher::Helm
     def deploy(release : String, chart : String, version : String,
                repo : String, username : String? = nil, password : String? = nil,
                namespace = "default", create_namespace = false,
-               values : String? = nil)
+               values : String? = nil, reset_values = false)
       opts = {
         "version"   => version,
         "repo"      => repo,
         "namespace" => namespace,
         "install"   => nil,
-        "output"    => "json",
+        "output"    => "yaml",
       }
 
       opts["username"] = username unless username.nil?
       opts["password"] = password unless password.nil?
       opts["create-namespace"] = nil if create_namespace
+      opts["reset-values"] = nil if reset_values
 
       unless values.nil?
         values_file = File.tempfile
@@ -40,36 +41,31 @@ module Watcher::Helm
       end
 
       output = execute_command(["upgrade", release, chart], opts)
-      Client::Deploy.from_json(output)
+      Client::Deploy.from_yaml(output)
     end
 
     # TODO: Fix the 256 limit for the listing.
     def list_releases(namespace = "default")
       output = execute_command(["list"], {
         "namespace" => namespace,
-        "output"    => "json",
+        "output"    => "yaml",
       })
-      Array(Client::Release).from_json(output)
+      Array(Client::Release).from_yaml(output)
     end
 
     def release_history(release_name : String, namespace = "default")
       output = execute_command(["history", release_name], {
         "namespace" => namespace,
-        "output"    => "json",
+        "output"    => "yaml",
       })
-      Array(Client::Revision).from_json(output)
+      Array(Client::Revision).from_yaml(output)
     end
 
-    def get_revision_values(release : String, revision = nil, namespace = "default", all = false)
-      opts = Hash(String, String?){
+    def get_release_values(release : String, namespace = "default")
+      output = execute_command(["get", "values", release], {
         "namespace" => namespace,
         "output"    => "yaml",
-      }
-
-      opts["all"] = nil if all
-      opts["revision"] = revision unless revision.nil?
-
-      output = execute_command(["get", "values", release], opts)
+      })
       YAML.parse(output)
     end
 
@@ -88,27 +84,27 @@ module Watcher::Helm
   end
 
   struct Client::Release
-    include JSON::Serializable
+    include YAML::Serializable
 
-    @[JSON::Field(key: "name")]
+    @[YAML::Field(key: "name")]
     getter name : String
 
-    @[JSON::Field(key: "namespace")]
+    @[YAML::Field(key: "namespace")]
     getter namespace : String
 
-    @[JSON::Field(key: "revision")]
+    @[YAML::Field(key: "revision")]
     getter revision : String
 
-    @[JSON::Field(key: "updated")]
+    @[YAML::Field(key: "updated")]
     getter updated : String
 
-    @[JSON::Field(key: "status")]
+    @[YAML::Field(key: "status")]
     getter status : String
 
-    @[JSON::Field(key: "chart")]
+    @[YAML::Field(key: "chart")]
     getter chart : String
 
-    @[JSON::Field(key: "app_version")]
+    @[YAML::Field(key: "app_version")]
     getter app_version : String
 
     def extract_chart_version(name)
@@ -117,61 +113,61 @@ module Watcher::Helm
   end
 
   struct Client::Revision
-    include JSON::Serializable
+    include YAML::Serializable
 
-    @[JSON::Field(key: "revision")]
+    @[YAML::Field(key: "revision")]
     getter revision : UInt32
 
-    @[JSON::Field(key: "updated")]
+    @[YAML::Field(key: "updated")]
     getter updated : String
 
-    @[JSON::Field(key: "status")]
+    @[YAML::Field(key: "status")]
     getter status : String
 
-    @[JSON::Field(key: "chart")]
+    @[YAML::Field(key: "chart")]
     getter chart : String
 
-    @[JSON::Field(key: "app_version")]
+    @[YAML::Field(key: "app_version")]
     getter app_version : String
 
-    @[JSON::Field(key: "description")]
+    @[YAML::Field(key: "description")]
     getter description : String
   end
 
   struct Client::Deploy
-    include JSON::Serializable
+    include YAML::Serializable
 
-    @[JSON::Field(key: "name")]
+    @[YAML::Field(key: "name")]
     getter name : String
 
-    @[JSON::Field(key: "info")]
+    @[YAML::Field(key: "info")]
     getter info : Info
 
-    @[JSON::Field(key: "version")]
+    @[YAML::Field(key: "version")]
     getter version : UInt32
 
-    @[JSON::Field(key: "namespace")]
+    @[YAML::Field(key: "namespace")]
     getter namespace : String
 
     struct Info
-      include JSON::Serializable
+      include YAML::Serializable
 
-      @[JSON::Field(key: "first_deployed")]
+      @[YAML::Field(key: "first_deployed")]
       getter first_deployed : String
 
-      @[JSON::Field(key: "last_deployed")]
+      @[YAML::Field(key: "last_deployed")]
       getter last_deployed : String
 
-      @[JSON::Field(key: "deleted")]
+      @[YAML::Field(key: "deleted")]
       getter deleted : String
 
-      @[JSON::Field(key: "description")]
+      @[YAML::Field(key: "description")]
       getter description : String
 
-      @[JSON::Field(key: "status")]
+      @[YAML::Field(key: "status")]
       getter status : String
 
-      @[JSON::Field(key: "notes")]
+      @[YAML::Field(key: "notes")]
       getter notes : String
     end
   end
@@ -223,6 +219,11 @@ module Watcher::Helm
 
     @[YAML::Field(key: "annotations")]
     getter annotations : Hash(String, String)?
+
+    def prerelease?
+      !SemanticVersion.parse(@version)
+        .prerelease.identifiers.empty?
+    end
 
     struct Maintainer
       include YAML::Serializable
