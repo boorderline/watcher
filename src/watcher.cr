@@ -2,8 +2,6 @@ require "log"
 require "option_parser"
 require "http/server"
 
-require "schedule"
-
 require "./application"
 
 module Watcher
@@ -59,6 +57,7 @@ begin
   # TODO: Support configuration via environment variables (dotenv?)
 
   config_dir = nil
+  inter
   OptionParser.parse do |parser|
     parser.banner = "Usage: watcher [args]"
 
