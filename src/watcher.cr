@@ -7,7 +7,7 @@ require "./application"
 module Watcher
   VERSION = "0.1.0"
 
-  def self.run_workers(config_dir : String)
+  def self.run_workers(config_dir : String, interval : UInt32)
     if !Dir.exists?(config_dir.as(String))
       raise "Directory #{config_dir} doesn't exist!"
     end
@@ -34,7 +34,7 @@ module Watcher
 
       config_files.each { results.receive }
 
-      sleep 30.seconds
+      sleep interval.seconds
     end
   end
 
@@ -57,7 +57,7 @@ begin
   # TODO: Support configuration via environment variables (dotenv?)
 
   config_dir = nil
-  inter
+  interval = 30_u32
   OptionParser.parse do |parser|
     parser.banner = "Usage: watcher [args]"
 
@@ -65,8 +65,17 @@ begin
       config_dir = dir
     end
 
+    parser.on("--interval=SECONDS", "-i SECONDS", "Pooling inteval (default: #{interval})") do |seconds|
+      interval = seconds.to_u32
+    end
+
     parser.on("--help", "-h", "Display this help") do
       puts parser
+      exit
+    end
+
+    parser.on("--version", "-v", "Display version information") do
+      puts Watcher::VERSION
       exit
     end
 
@@ -79,7 +88,7 @@ begin
     raise "Missing configuration directory!"
   end
 
-  spawn Watcher.run_workers(config_dir.as(String))
+  spawn Watcher.run_workers(config_dir.as(String), interval)
   Watcher.run_web
 rescue ex
   STDERR.puts "ERROR: #{ex.message}"
