@@ -1,13 +1,12 @@
 require "log"
 require "option_parser"
-require "http/server"
 
 require "./application"
 
 module Watcher
   VERSION = "0.1.0"
 
-  def self.run_workers(config_dir : String, interval : UInt32)
+  def self.run(config_dir : String, interval : UInt32)
     if !Dir.exists?(config_dir.as(String))
       raise "Directory #{config_dir} doesn't exist!"
     end
@@ -30,19 +29,6 @@ module Watcher
       config_files.each { results.receive }
       sleep interval.seconds
     end
-  end
-
-  def self.run_web
-    # TODO: Proper implementation
-    server = HTTP::Server.new do |context|
-      context.response.content_type = "text/plain"
-      context.response.print "Hello world!"
-    end
-
-    # TODO: Add parameteres fro the web server
-    address = server.bind_tcp "0.0.0.0", 8080
-    Log.info { "Listening on http://#{address}" }
-    server.listen
   end
 end
 
@@ -81,8 +67,7 @@ begin
     raise "Missing configuration directory!"
   end
 
-  spawn Watcher.run_workers(config_dir.as(String), interval)
-  Watcher.run_web
+  Watcher.run(config_dir.as(String), interval)
 rescue ex
   STDERR.puts "ERROR: #{ex.message}"
   exit(1)
