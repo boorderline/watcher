@@ -1,11 +1,10 @@
 require "log"
 require "option_parser"
 
+require "./version"
 require "./application"
 
 module Watcher
-  VERSION = "0.1.0"
-
   def self.run(config_dir : String, interval : UInt32)
     if !Dir.exists?(config_dir.as(String))
       raise "Directory #{config_dir} doesn't exist!"
