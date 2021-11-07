@@ -37,3 +37,5 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: boord/watcher:${{ github.event.release.tag_name }},boord/watcher:latest
+          cache-from: type=registry,ref=boord/watcher:latest
+          cache-to: type=inline 
