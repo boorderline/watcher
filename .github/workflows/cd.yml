@@ -20,8 +20,6 @@ jobs:
         run: |
           yq eval -i ".version = \"${{ github.event.release.tag_name }}\"" shard.yml
           sed -i "s/VERSION = \".*\"/VERSION = \"${{ github.event.release.tag_name }}\"/" src/version.cr
-          cat shard.yml
-          cat src/version.cr
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -38,5 +36,3 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: boord/watcher:${{ github.event.release.tag_name }},boord/watcher:latest
-          cache-from: type=registry,ref=boord/watcher:latest
-          cache-to: type=inline
