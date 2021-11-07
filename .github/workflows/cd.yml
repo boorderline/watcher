@@ -7,16 +7,19 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.release.tag_name, '-')"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
       
+      - name: Extract version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      
       - name: Update version
         run: |
-          yq eval -i ".version = \"${{ github.event.release.tag_name }}\"" shard.yml
-          sed -i "s/VERSION = \".*\"/VERSION = \"${{ github.event.release.tag_name }}\"/" src/version.cr
+          yq eval -i ".version = \"${{ steps.get_version.outputs.VERSION }}\"" shard.yml
+          sed -i "s/VERSION = \".*\"/VERSION = \"${{ steps.get_version.outputs.VERSION }}\"/" src/version.cr
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v1
@@ -35,4 +38,4 @@ jobs:
         with:
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: boord/watcher:${{ github.event.release.tag_name }},boord/watcher:latest
+          tags: boord/watcher:${{ steps.get_version.outputs.VERSION }},boord/watcher:latest
