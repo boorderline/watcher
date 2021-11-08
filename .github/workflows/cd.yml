@@ -7,7 +7,6 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.release.tag_name, '-')"
 
     steps:
       - name: Checkout code
@@ -39,3 +38,18 @@ jobs:
           tags: boord/watcher:${{ github.event.release.tag_name }},boord/watcher:latest
           cache-from: type=registry,ref=boord/watcher:latest
           cache-to: type=inline 
+
+  helm:
+    runs-on: ubuntu-latest
+
+    needs: [docker]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Helm package
+        run: |
+          helm package helm \
+          --version ${{ github.event.release.tag_name }} \
+          --app-version ${{ github.event.release.tag_name }}
