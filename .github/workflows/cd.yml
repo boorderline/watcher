@@ -50,6 +50,4 @@ jobs:
       
       - name: Helm package
         run: |
-          helm package helm \
-          --version ${{ github.event.release.tag_name }} \
-          --app-version ${{ github.event.release.tag_name }}
+          helm package helm --version ${{ github.event.release.tag_name }} --app-version ${{ github.event.release.tag_name }}
