@@ -55,4 +55,4 @@ jobs:
       - name: Publish Helm Chart
         run: |
           helm plugin install https://github.com/chartmuseum/helm-push.git
-          helm cm-push *.tgz ${{ secrets.CHARTMUSEUM_URL }} --username ${{ secrets.CHARTMUSEUM_USERNAME }} --password ${{ secrets.CHARTMUSEUM_PASSWORD }}
+          helm cm-push *.tgz ${{ secrets.CHARTMUSEUM_URL }} -u ${{ secrets.CHARTMUSEUM_USERNAME }} -p ${{ secrets.CHARTMUSEUM_PASSWORD }}
