@@ -4,3 +4,11 @@ description: A Helm chart for Watcher
 type: application
 version: "0.1.0"
 appVersion: "0.1.0"
+
+long_description: |
+  ## Installation
+
+  ```
+  helm repo add boord https://helm.boord.io
+  helm install watcher boord/watcher
+  ```

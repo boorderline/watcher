@@ -1,45 +1,32 @@
 image:
-  repository: boord/watcher
-  pullPolicy: IfNotPresent
-  tag: ""
+  repository: boord/watcher # Docker image repository
+  pullPolicy: IfNotPresent # Kubernetes image pull policy
+  tag: "" # Docker image tag
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+imagePullSecrets: [] # Kubernetes docker registry secret
+nameOverride: "" # String to partially override fullname
+fullnameOverride: "" # String to fully override fullname
 
 serviceAccount:
-  create: true
-  annotations: {}
-  name: ""
+  create: true # Enable creation of service account
+  annotations: {} # Additional annotations for the service account
+  name: "" # The name of the service account to use
 
-podAnnotations: {}
+podAnnotations: {} # Annotations for pods
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext: {} # Pod security context
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+securityContext: {} # Security context
 
-resources: {}
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources: {} # Pod resources
 
-nodeSelector: {}
+nodeSelector: {} # Node labels for pod assignment
 
-tolerations: []
+tolerations: [] # Tolerations for pod assignment
 
-affinity: {}
+affinity: {} # Affinity for pod assignment
 
-configurations:
+configurations: # Watcher configuration files
   code-server.yaml: |
     version: "1"
     name: Code Server

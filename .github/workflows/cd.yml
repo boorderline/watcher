@@ -48,6 +48,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Generate documentation
+        run: |
+          pip3 install frigate
+          frigate gen --no-credits helm > helm/README.md
+
       - name: Helm package
         run: |
           helm package helm --version ${{ github.event.release.tag_name }} --app-version ${{ github.event.release.tag_name }}
