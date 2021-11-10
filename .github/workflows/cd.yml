@@ -53,6 +53,9 @@ jobs:
           helm package helm --version ${{ github.event.release.tag_name }} --app-version ${{ github.event.release.tag_name }}
 
       - name: Publish Helm Chart
+        env:
+          HELM_REPO_USERNAME: ${{ secrets.CHARTMUSEUM_USERNAME }}
+          HELM_REPO_PASSWORD: ${{ secrets.CHARTMUSEUM_PASSWORD }}
         run: |
           helm plugin install https://github.com/chartmuseum/helm-push.git
-          helm cm-push *.tgz ${{ secrets.CHARTMUSEUM_URL }} -u ${{ secrets.CHARTMUSEUM_USERNAME }} -p ${{ secrets.CHARTMUSEUM_PASSWORD }}
+          helm cm-push *.tgz ${{ secrets.CHARTMUSEUM_URL }}
