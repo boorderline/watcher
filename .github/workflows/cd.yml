@@ -37,7 +37,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: boord/watcher:${{ github.event.release.tag_name }},boord/watcher:latest
           cache-from: type=registry,ref=boord/watcher:latest
-          cache-to: type=inline 
+          cache-to: type=inline
 
   helm:
     runs-on: ubuntu-latest
@@ -47,7 +47,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       - name: Helm package
         run: |
           helm package helm --version ${{ github.event.release.tag_name }} --app-version ${{ github.event.release.tag_name }}
+
+      - name: Publish Helm Chart
+        run: |
+          helm plugin install https://github.com/chartmuseum/helm-push.git
+          helm cm-push *.tgz ${{ secrets.CHARTMUSEUM_URL }} --username ${{ secrets.CHARTMUSEUM_USERNAME }} --password ${{ secrets.CHARTMUSEUM_PASSWORD }}
