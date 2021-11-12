@@ -1,6 +1,6 @@
 # watcher
 
-[![CI](https://github.com/boorderline/watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/boorderline/watcher/actions/workflows/ci.yml)
+[![CI](https://github.com/boorderline/watcher/actions/workflows/CI.yml/badge.svg)](https://github.com/boorderline/watcher/actions/workflows/CI.yml)
 
 Helm based continuous delivery tool
 
