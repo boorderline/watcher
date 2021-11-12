@@ -16,22 +16,6 @@ module Watcher::Config
     @[YAML::Field(key: "target")]
     getter target : Target
 
-    struct Target
-      include YAML::Serializable
-
-      @[YAML::Field(key: "name")]
-      getter name : String
-
-      @[YAML::Field(key: "namespace")]
-      getter namespace : String
-
-      @[YAML::Field(key: "create_namespace")]
-      getter create_namespace : Bool = false
-
-      @[YAML::Field(key: "values")]
-      getter values : YAML::Any?
-    end
-
     struct Source
       include YAML::Serializable
 
@@ -47,8 +31,27 @@ module Watcher::Config
       @[YAML::Field(key: "chart")]
       getter chart : String
 
-      @[YAML::Field(key: "prerelease")]
-      getter prerelease : Bool = true
+      @[YAML::Field(key: "version")]
+      getter version : String?
+
+      @[YAML::Field(key: "allow_prereleases")]
+      getter allow_prereleases : Bool = false
+    end
+
+    struct Target
+      include YAML::Serializable
+
+      @[YAML::Field(key: "name")]
+      getter name : String
+
+      @[YAML::Field(key: "namespace")]
+      getter namespace : String
+
+      @[YAML::Field(key: "create_namespace")]
+      getter create_namespace : Bool = false
+
+      @[YAML::Field(key: "values")]
+      getter values : YAML::Any?
     end
   end
 end

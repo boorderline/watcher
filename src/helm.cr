@@ -3,15 +3,20 @@ require "semantic_version"
 
 module Watcher::Helm
   class Client
+    Log = ::Log.for(self)
+
     def initialize
     end
 
-    def get_latest_chart(chart : String,
-                         repo : String, username : String? = nil, password : String? = nil)
-      opts = {"repo" => repo}
+    def get_chart(chart : String, version : String?, allow_prereleases : Bool,
+                  repo : String, username : String? = nil, password : String? = nil)
+      opts = Hash(String, String?).new
 
+      opts["repo"] = repo
       opts["username"] = username unless username.nil?
       opts["password"] = password unless password.nil?
+      opts["version"] = version unless version.nil?
+      opts["devel"] = nil if allow_prereleases
 
       output = execute_command(["show", "chart", chart], opts)
       Client::Chart.from_yaml(output)
@@ -70,13 +75,13 @@ module Watcher::Helm
     end
 
     private def execute_command(params : Array(String), opts = Hash(String, String?).new)
-      args = params.concat(
-        opts.flat_map { |k, v| v.nil? ? ["--#{k}"] : ["--#{k}", v] }
-      )
+      args = params.concat(opts.flat_map { |k, v| v.nil? ? ["--#{k}"] : ["--#{k}", v] })
 
       stdout = IO::Memory.new
       stderr = IO::Memory.new
       status = Process.run("helm", args: args, output: stdout, error: stderr, shell: true)
+      Log.debug { args.join(" ") }
+
       raise stderr.to_s.chomp unless status.success?
 
       stdout.to_s
@@ -144,7 +149,7 @@ module Watcher::Helm
     getter info : Info
 
     @[YAML::Field(key: "version")]
-    getter version : UInt32
+    getter revision : UInt32
 
     @[YAML::Field(key: "namespace")]
     getter namespace : String

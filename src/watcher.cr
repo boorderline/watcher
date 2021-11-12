@@ -17,11 +17,17 @@ module Watcher
         Path[f].expand.to_s
       end
 
+      Log.info { "Found #{config_files.size} configurations ..." }
+
+      # FIXME: Handle possible exceptions in the spawn block
       config_files.each do |c|
         config = File.open(c) { |f| Watcher::Config::App.from_yaml(f) }
+
         spawn name: config.name do
           Watcher::Application.new(config).run
           results.send(0)
+        rescue ex
+          Log.error { ex }
         end
       end
 
@@ -32,10 +38,10 @@ module Watcher
 end
 
 begin
-  Log.setup
+  Log.setup_from_env
 
   config_dir = nil
-  interval = 30_u32
+  interval = 10_u32
   OptionParser.parse do |parser|
     parser.banner = "Usage: watcher [args]"
 
@@ -66,8 +72,19 @@ begin
     raise "Missing configuration directory!"
   end
 
+  [Signal::INT, Signal::TERM].each do |signal|
+    signal.trap do
+      puts "Exiting ..."
+      exit
+    end
+  end
+
+  Log.info { "Started Watcher #{Watcher::VERSION}" }
+  Log.info { "Loading configurations from: #{config_dir}" }
+  Log.info { "Scraping interval: #{interval.seconds} " }
+
   Watcher.run(config_dir.as(String), interval)
 rescue ex
   STDERR.puts "ERROR: #{ex.message}"
-  exit(1)
+  exit 1
 end

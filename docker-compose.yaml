@@ -1,9 +1,23 @@
 version: "2.7"
 
 services:
+  chartmuseum:
+    image: bitnami/chartmuseum:0.13.1
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   watcher:
     build: .
-    environment:
-      LOG_LEVEL: DEBUG
+    environment: {}
+      # LOG_LEVEL: DEBUG
     volumes:
       - ./config-examples:/opt/watcher/config
+      - $HOME/.kube:/home/watcher/.kube
+    depends_on:
+      chartmuseum:
+        condition: service_healthy
