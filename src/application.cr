@@ -49,7 +49,7 @@ module Watcher
         @config.source.repository_password,
       )
 
-      @log.info  { "Using '#{@config.source.strategy}' strategy to retrieve chart data" }
+      @log.info { "Using '#{@config.source.strategy}' strategy to retrieve chart data" }
 
       chart = nil
       case @config.source.strategy
