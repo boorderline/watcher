@@ -20,4 +20,5 @@ VOLUME [ "/opt/watcher/config" ]
 RUN adduser -D watcher
 USER watcher
 
-ENTRYPOINT [ "watcher", "-d", "/opt/watcher/config" ]
+ENTRYPOINT [ "/usr/local/bin/watcher" ]
+CMD [ "-d", "/opt/watcher/config" ]

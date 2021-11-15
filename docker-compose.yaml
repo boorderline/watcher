@@ -15,6 +15,7 @@ services:
     build: .
     environment: {}
       # LOG_LEVEL: DEBUG
+    command: "-d /opt/watcher/config -i 10"
     volumes:
       - ./config-examples:/opt/watcher/config
       - $HOME/.kube:/home/watcher/.kube

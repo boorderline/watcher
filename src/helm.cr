@@ -1,25 +1,30 @@
 require "yaml"
+require "uri"
+require "http/client"
 require "semantic_version"
 
 module Watcher::Helm
   class Client
     Log = ::Log.for(self)
 
-    def initialize
-    end
+    def get_chart_entries(chart : String, repo : String, username : String? = nil, password : String? = nil)
+      url = URI.parse(repo)
+      url.user = username
+      url.password = password
+      url.path = Path.posix(url.path, "index.yaml").to_s
 
-    def get_chart(chart : String, version : String?, allow_prereleases : Bool,
-                  repo : String, username : String? = nil, password : String? = nil)
-      opts = Hash(String, String?).new
+      HTTP::Client.get(url.to_s) do |response|
+        unless response.success?
+          raise("Cannot retrieve #{url}: #{response.status_code}")
+        end
 
-      opts["repo"] = repo
-      opts["username"] = username unless username.nil?
-      opts["password"] = password unless password.nil?
-      opts["version"] = version unless version.nil?
-      opts["devel"] = nil if allow_prereleases
+        index = Client::RepoIndex.from_yaml(response.body_io.gets_to_end)
+        unless index.entries.has_key?(chart)
+          raise("Cannot find '#{chart}' chart in the repository.")
+        end
 
-      output = execute_command(["show", "chart", chart], opts)
-      Client::Chart.from_yaml(output)
+        index.entries[chart]
+      end
     end
 
     def deploy(release : String, chart : String, version : String,
@@ -82,7 +87,9 @@ module Watcher::Helm
       status = Process.run("helm", args: args, output: stdout, error: stderr, shell: true)
       Log.debug { args.join(" ") }
 
-      raise stderr.to_s.chomp unless status.success?
+      unless status.success?
+        raise stderr.to_s.chomp
+      end
 
       stdout.to_s
     end
@@ -189,8 +196,8 @@ module Watcher::Helm
     @[YAML::Field(key: "version")]
     getter version : String
 
-    @[YAML::Field(key: "kubeVersion")]
-    getter kube_version : String?
+    @[YAML::Field(key: "appVersion")]
+    getter app_version : String?
 
     @[YAML::Field(key: "description")]
     getter description : String?
@@ -198,68 +205,24 @@ module Watcher::Helm
     @[YAML::Field(key: "type")]
     getter type : String?
 
-    @[YAML::Field(key: "keywords")]
-    getter keywords : Array(String)?
-
-    @[YAML::Field(key: "home")]
-    getter home : String?
-
-    @[YAML::Field(key: "sources")]
-    getter sources : Array(String)?
-
-    @[YAML::Field(key: "dependencies")]
-    getter dependencies : Array(Dependency)?
-
-    @[YAML::Field(key: "maintainers")]
-    getter maintainer : Array(Maintainer)?
-
-    @[YAML::Field(key: "icon")]
-    getter icon : String?
-
-    @[YAML::Field(key: "appVersion")]
-    getter app_version : String?
-
     @[YAML::Field(key: "deprecated")]
     getter deprecated : Bool?
 
-    @[YAML::Field(key: "annotations")]
-    getter annotations : Hash(String, String)?
+    @[YAML::Field(key: "created")]
+    getter created : String
 
     def prerelease?
-      !SemanticVersion.parse(@version)
-        .prerelease.identifiers.empty?
+      !SemanticVersion.parse(@version).prerelease.identifiers.empty?
     end
+  end
 
-    struct Maintainer
-      include YAML::Serializable
+  struct Client::RepoIndex
+    include YAML::Serializable
 
-      @[YAML::Field(key: "name")]
-      getter name : String
+    @[YAML::Field(key: "apiVersion")]
+    getter api_version : String
 
-      @[YAML::Field(key: "email")]
-      getter email : String?
-
-      @[YAML::Field(key: "url")]
-      getter url : String?
-    end
-
-    struct Dependency
-      include YAML::Serializable
-
-      @[YAML::Field(key: "name")]
-      getter name : String
-
-      @[YAML::Field(key: "version")]
-      getter version : String
-
-      @[YAML::Field(key: "repository")]
-      getter repository : String?
-
-      @[YAML::Field(key: "condition")]
-      getter condition : String?
-
-      @[YAML::Field(key: "tags")]
-      getter tags : Array(String)?
-    end
+    @[YAML::Field(key: "entries")]
+    getter entries : Hash(String, Array(Client::Chart))
   end
 end

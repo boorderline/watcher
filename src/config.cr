@@ -1,6 +1,12 @@
 require "yaml"
 
 module Watcher::Config
+  enum FetchStrategy
+    LatestCreated
+    LatestCreatedStable
+    LatestCreatedPrerelease
+  end
+
   struct App
     include YAML::Serializable
 
@@ -31,11 +37,8 @@ module Watcher::Config
       @[YAML::Field(key: "chart")]
       getter chart : String
 
-      @[YAML::Field(key: "version")]
-      getter version : String?
-
-      @[YAML::Field(key: "allow_prereleases")]
-      getter allow_prereleases : Bool = false
+      @[YAML::Field(key: "strategy")]
+      getter strategy = Watcher::Config::FetchStrategy::LatestCreated
     end
 
     struct Target

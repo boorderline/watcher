@@ -5,7 +5,6 @@ name: Test
 source:
   repository: http://chartmuseum:8080
   chart: test-app
-  allow_prereleases: true
 
 target:
   name: test
