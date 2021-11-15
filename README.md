@@ -1,8 +1,69 @@
 # watcher
 
 [![CI](https://github.com/boorderline/watcher/actions/workflows/CI.yml/badge.svg)](https://github.com/boorderline/watcher/actions/workflows/CI.yml)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/boord)](https://artifacthub.io/packages/search?repo=boord)
 
-Helm based continuous delivery tool
+Helm-based continuous delivery tool.
+
+## Installation
+
+### From source
+
+Please make sure you have [installed Crystal](https://crystal-lang.org/install/) and friends on your machine. Once you have all the tooling in place, let's start building the application:
+
+```
+shards build --release --no-debug --static
+```
+
+This will build the application in "production" mode; it might take a few seconds to spit out an executable. Once done, the application will be available inside the `./bin` directory.
+
+**NOTE:** You will NOT be able to build a static executable under macOS; you will need to remove the `--static` option.
+
+### Using Docker
+
+```
+docker pull boord/watcher
+docker run
+```
+
+**NOTE:** You can also check the provided Docker Compose file for an example of how to run the application.
+
+### Via Helm
+
+```
+helm repo add boord https://charts.boord.io
+helm install watcher boord/watcher
+```
+
+## Configuration
+
+TODO: Add details here ...
+
+## Development environment
+
+The development environment has the following requirements:
+
+- [minikibe](https://minikube.sigs.k8s.io/docs/) or an alternative, the Kubernetes version distributed with Docker seems to work fine.
+- [Helm](https://helm.sh/docs/intro/install/) (optional)
+- [Helm ChartMuseum plugin](https://github.com/chartmuseum/helm-push) (optional)
+
+```
+docker-compose up -d --build
+```
+
+Running the command above will build, and start `watcher` alongside a `chartmuseum` instance. To quickly inspect the logs for `watcher`, just run the following command:
+
+```
+docker logs -f watcher
+```
+
+At this point, `chartmuseum` is available on http://localhost:8080 and the authentication/authorization features are entirely disabled. You can use your local `helm` CLI tool to interact with it. If you have installed the [ChartMuseum Push plugin](https://github.com/chartmuseum/helm-push), you can start uploading Helm Charts into this instance.
+
+You can remove the entire development environment with the following command:
+
+```
+docker-compose down
+```
 
 ## Contributing
 
