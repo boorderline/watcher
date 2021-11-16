@@ -2,7 +2,7 @@ require "log"
 require "option_parser"
 
 require "./version"
-require "./application"
+require "./commands"
 
 module Watcher
   def self.run(config_dir : String, interval : UInt32)
@@ -19,10 +19,12 @@ module Watcher
 
       Log.info { "Found #{config_files.size} configurations ..." }
       config_files.each do |c|
-        config = File.open(c) { |f| Watcher::Config::App.from_yaml(f) }
+        config = File.open(c) do |f|
+          Watcher::Config.from_yaml(f)
+        end
 
         spawn(name: config.name) do
-          Watcher::Application.new(config).run
+          Watcher::Command::Update.new(config).run
           results.send(0)
         end
       rescue ex
@@ -77,9 +79,10 @@ begin
     end
   end
 
-  Log.info { "Started Watcher #{Watcher::VERSION}" }
-  Log.info { "Loading configurations from: #{config_dir}" }
-  Log.info { "Scraping interval: #{interval.seconds} " }
+  puts("Started Watcher #{Watcher::VERSION}")
+  puts("Configurations directory : #{config_dir}")
+  puts("Check interval           : #{interval.seconds}")
+  puts("----------")
 
   Watcher.run(config_dir.as(String), interval)
 rescue ex

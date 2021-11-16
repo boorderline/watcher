@@ -18,7 +18,7 @@ module Watcher::Helm
           raise("Cannot retrieve #{url}: #{response.status_code}")
         end
 
-        index = Client::RepoIndex.from_yaml(response.body_io.gets_to_end)
+        index = Index.from_yaml(response.body_io.gets_to_end)
         unless index.entries.has_key?(chart)
           raise("Cannot find '#{chart}' chart in the repository.")
         end
@@ -51,7 +51,7 @@ module Watcher::Helm
       end
 
       output = execute_command(["upgrade", release, chart], opts)
-      Client::Deploy.from_yaml(output)
+      Deploy.from_yaml(output)
     end
 
     # TODO: Fix the 256 limit for the listing.
@@ -60,7 +60,7 @@ module Watcher::Helm
         "namespace" => namespace,
         "output"    => "yaml",
       })
-      Array(Client::Release).from_yaml(output)
+      Array(Release).from_yaml(output)
     end
 
     def release_history(release_name : String, namespace = "default")
@@ -93,136 +93,136 @@ module Watcher::Helm
 
       stdout.to_s
     end
-  end
 
-  struct Client::Release
-    include YAML::Serializable
-
-    @[YAML::Field(key: "name")]
-    getter name : String
-
-    @[YAML::Field(key: "namespace")]
-    getter namespace : String
-
-    @[YAML::Field(key: "revision")]
-    getter revision : String
-
-    @[YAML::Field(key: "updated")]
-    getter updated : String
-
-    @[YAML::Field(key: "status")]
-    getter status : String
-
-    @[YAML::Field(key: "chart")]
-    getter chart : String
-
-    @[YAML::Field(key: "app_version")]
-    getter app_version : String
-
-    def extract_chart_version(name)
-      @chart.gsub(/^#{name}-/, "")
-    end
-  end
-
-  struct Client::Revision
-    include YAML::Serializable
-
-    @[YAML::Field(key: "revision")]
-    getter revision : UInt32
-
-    @[YAML::Field(key: "updated")]
-    getter updated : String
-
-    @[YAML::Field(key: "status")]
-    getter status : String
-
-    @[YAML::Field(key: "chart")]
-    getter chart : String
-
-    @[YAML::Field(key: "app_version")]
-    getter app_version : String
-
-    @[YAML::Field(key: "description")]
-    getter description : String
-  end
-
-  struct Client::Deploy
-    include YAML::Serializable
-
-    @[YAML::Field(key: "name")]
-    getter name : String
-
-    @[YAML::Field(key: "info")]
-    getter info : Info
-
-    @[YAML::Field(key: "version")]
-    getter revision : UInt32
-
-    @[YAML::Field(key: "namespace")]
-    getter namespace : String
-
-    struct Info
+    struct Release
       include YAML::Serializable
 
-      @[YAML::Field(key: "first_deployed")]
-      getter first_deployed : String
+      @[YAML::Field(key: "name")]
+      getter name : String
 
-      @[YAML::Field(key: "last_deployed")]
-      getter last_deployed : String
+      @[YAML::Field(key: "namespace")]
+      getter namespace : String
 
-      @[YAML::Field(key: "deleted")]
-      getter deleted : String
+      @[YAML::Field(key: "revision")]
+      getter revision : String
 
-      @[YAML::Field(key: "description")]
-      getter description : String
+      @[YAML::Field(key: "updated")]
+      getter updated : String
 
       @[YAML::Field(key: "status")]
       getter status : String
 
-      @[YAML::Field(key: "notes")]
-      getter notes : String
+      @[YAML::Field(key: "chart")]
+      getter chart : String
+
+      @[YAML::Field(key: "app_version")]
+      getter app_version : String
+
+      def extract_chart_version(name)
+        @chart.gsub(/^#{name}-/, "")
+      end
     end
-  end
 
-  struct Client::Chart
-    include YAML::Serializable
+    struct Revision
+      include YAML::Serializable
 
-    @[YAML::Field(key: "apiVersion")]
-    getter api_version : String
+      @[YAML::Field(key: "revision")]
+      getter revision : UInt32
 
-    @[YAML::Field(key: "name")]
-    getter name : String
+      @[YAML::Field(key: "updated")]
+      getter updated : String
 
-    @[YAML::Field(key: "version")]
-    getter version : String
+      @[YAML::Field(key: "status")]
+      getter status : String
 
-    @[YAML::Field(key: "appVersion")]
-    getter app_version : String?
+      @[YAML::Field(key: "chart")]
+      getter chart : String
 
-    @[YAML::Field(key: "description")]
-    getter description : String?
+      @[YAML::Field(key: "app_version")]
+      getter app_version : String
 
-    @[YAML::Field(key: "type")]
-    getter type : String?
-
-    @[YAML::Field(key: "deprecated")]
-    getter deprecated : Bool?
-
-    @[YAML::Field(key: "created")]
-    getter created : String
-
-    def prerelease?
-      !SemanticVersion.parse(@version).prerelease.identifiers.empty?
+      @[YAML::Field(key: "description")]
+      getter description : String
     end
-  end
 
-  struct Client::RepoIndex
-    include YAML::Serializable
+    struct Deploy
+      include YAML::Serializable
 
-    @[YAML::Field(key: "apiVersion")]
-    getter api_version : String
+      @[YAML::Field(key: "name")]
+      getter name : String
 
-    @[YAML::Field(key: "entries")]
-    getter entries : Hash(String, Array(Client::Chart))
+      @[YAML::Field(key: "info")]
+      getter info : Info
+
+      @[YAML::Field(key: "version")]
+      getter revision : UInt32
+
+      @[YAML::Field(key: "namespace")]
+      getter namespace : String
+
+      struct Info
+        include YAML::Serializable
+
+        @[YAML::Field(key: "first_deployed")]
+        getter first_deployed : String
+
+        @[YAML::Field(key: "last_deployed")]
+        getter last_deployed : String
+
+        @[YAML::Field(key: "deleted")]
+        getter deleted : String
+
+        @[YAML::Field(key: "description")]
+        getter description : String
+
+        @[YAML::Field(key: "status")]
+        getter status : String
+
+        @[YAML::Field(key: "notes")]
+        getter notes : String
+      end
+    end
+
+    struct Chart
+      include YAML::Serializable
+
+      @[YAML::Field(key: "apiVersion")]
+      getter api_version : String
+
+      @[YAML::Field(key: "name")]
+      getter name : String
+
+      @[YAML::Field(key: "version")]
+      getter version : String
+
+      @[YAML::Field(key: "appVersion")]
+      getter app_version : String?
+
+      @[YAML::Field(key: "description")]
+      getter description : String?
+
+      @[YAML::Field(key: "type")]
+      getter type : String?
+
+      @[YAML::Field(key: "deprecated")]
+      getter deprecated : Bool?
+
+      @[YAML::Field(key: "created")]
+      getter created : String
+
+      def prerelease?
+        !SemanticVersion.parse(@version).prerelease.identifiers.empty?
+      end
+    end
+
+    struct Index
+      include YAML::Serializable
+
+      @[YAML::Field(key: "apiVersion")]
+      getter api_version : String
+
+      @[YAML::Field(key: "entries")]
+      getter entries : Hash(String, Array(Chart))
+    end
   end
 end

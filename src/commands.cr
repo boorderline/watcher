@@ -2,8 +2,8 @@ require "./config"
 require "./helm"
 
 module Watcher
-  class Application
-    getter config : Watcher::Config::App
+  class Command::Update
+    getter config : Watcher::Config
 
     def initialize(@config)
       @helm = Watcher::Helm::Client.new
@@ -11,7 +11,7 @@ module Watcher
     end
 
     def run
-      @log.info { "Checking application for changes..." }
+      @log.info { "Checking for changes..." }
 
       chart = self.get_chart
 
@@ -19,29 +19,34 @@ module Watcher
       release_version = release.nil? ? nil : release.extract_chart_version(@config.source.chart)
       release_values = release.nil? ? nil : @helm.get_release_values(@config.target.name, @config.target.namespace)
 
-      if (release_version != chart.version) || (release_values != @config.target.values)
-        result = @helm.deploy(
-          release: @config.target.name,
-          chart: @config.source.chart,
-          version: chart.version,
-          repo: @config.source.repository,
-          username: @config.source.repository_username,
-          password: @config.source.repository_password,
-          namespace: @config.target.namespace,
-          create_namespace: @config.target.create_namespace,
-          values: @config.target.values.nil? ? nil : YAML.dump(@config.target.values),
-          reset_values: @config.target.values.nil?
-        )
-
-        @log.info { "Release #{@config.target.namespace}/#{@config.target.name} is now at revision #{result.revision} for #{@config.source.chart}:#{chart.version}" }
-      else
-        @log.info { "No changes..." }
+      if (release_version == chart.version) && (release_values == @config.target.values)
+        @log.info { "No changes." }
+        return
       end
+
+      result = @helm.deploy(
+        release: @config.target.name,
+        chart: @config.source.chart,
+        version: chart.version,
+        repo: @config.source.repository,
+        username: @config.source.repository_username,
+        password: @config.source.repository_password,
+        namespace: @config.target.namespace,
+        create_namespace: @config.target.create_namespace,
+        values: @config.target.values.nil? ? nil : YAML.dump(@config.target.values),
+        reset_values: @config.target.values.nil?
+      )
+
+      @log.info {
+        "Release #{@config.target.namespace}/#{@config.target.name} " \
+        "is now at revision #{result.revision} " \
+        "for #{@config.source.chart}:#{chart.version}."
+      }
     rescue ex
       @log.error { ex.message }
     end
 
-    private def get_chart : Watcher::Helm::Client::Chart
+    private def get_chart
       entries = @helm.get_chart_entries(
         @config.source.chart,
         @config.source.repository,
@@ -49,7 +54,7 @@ module Watcher
         @config.source.repository_password,
       )
 
-      @log.info { "Using '#{@config.source.strategy}' strategy to retrieve chart data" }
+      @log.info { "Using '#{@config.source.strategy}' strategy to retrieve chart data." }
 
       chart = nil
       case @config.source.strategy
@@ -70,7 +75,7 @@ module Watcher
       end
 
       if chart.nil?
-        raise "No chart named #{@config.source.chart} has been found..."
+        raise("Chart #{@config.source.chart} not found!")
       end
 
       chart.as(Watcher::Helm::Client::Chart)

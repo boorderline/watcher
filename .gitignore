@@ -4,5 +4,7 @@
 /.shards/
 *.dwarf
 
+.DS_Store
+
 manifests/
 k8s/

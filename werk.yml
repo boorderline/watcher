@@ -3,8 +3,8 @@ version: "1"
 jobs:
   main:
     executor: local
-    variables:
-      LOG_LEVEL: DEBUG
+    variables: {}
+      # LOG_LEVEL: DEBUG
     commands:
       - ./bin/watcher -d ./config-examples -i 10
     needs:
