@@ -33,3 +33,8 @@ jobs:
     executor: local
     commands:
       - crystal tool format --check
+
+  docs:
+    executor: local
+    commands:
+      - crystal docs

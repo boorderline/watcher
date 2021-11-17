@@ -5,6 +5,10 @@
 
 Helm-based continuous delivery tool.
 
+## Description
+
+Watcher checks Helm repositories for new versions of configured Charts based on a strategy. If a new version is available, then it will try to deploy it inside your cluster automatically.
+
 ## Installation
 
 ### From source
@@ -37,7 +41,27 @@ helm install watcher boord/watcher
 
 ## Configuration
 
-TODO: Add details here ...
+```yaml
+version: "1"
+name: Grafana
+
+source:
+  repository: https://grafana.github.io/helm-charts
+  chart: grafana
+  strategy: LatestCreatedStable
+
+target:
+  name: grafana
+  namespace: monitoring
+  create_namespace: true
+  values:
+    service:
+      type: LoadBalancer
+
+    persistence:
+      enabled: true
+      size: 20Gi
+```
 
 ## Development environment
 

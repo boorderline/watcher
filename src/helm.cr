@@ -7,6 +7,7 @@ module Watcher::Helm
   class Client
     Log = ::Log.for(self)
 
+    # Retrieves all version entries for a given chart in a repository.
     def get_chart_entries(chart : String, repo : String, username : String? = nil, password : String? = nil)
       url = URI.parse(repo)
       url.user = username
@@ -27,6 +28,7 @@ module Watcher::Helm
       end
     end
 
+    # Installs/upgrades a release to a new version of a chart.
     def deploy(release : String, chart : String, version : String,
                repo : String, username : String? = nil, password : String? = nil,
                namespace = "default", create_namespace = false,
@@ -54,6 +56,7 @@ module Watcher::Helm
       Deploy.from_yaml(output)
     end
 
+    # Lists all of the releases for a specified namespace.
     # TODO: Fix the 256 limit for the listing.
     def list_releases(namespace = "default")
       output = execute_command(["list"], {
@@ -63,6 +66,7 @@ module Watcher::Helm
       Array(Release).from_yaml(output)
     end
 
+    # Retrieves historical revisions for a given release.
     def release_history(release_name : String, namespace = "default")
       output = execute_command(["history", release_name], {
         "namespace" => namespace,
@@ -71,6 +75,7 @@ module Watcher::Helm
       Array(Client::Revision).from_yaml(output)
     end
 
+    # Retrieves values file for a given release.
     def get_release_values(release : String, namespace = "default")
       output = execute_command(["get", "values", release], {
         "namespace" => namespace,
@@ -98,24 +103,31 @@ module Watcher::Helm
       include YAML::Serializable
 
       @[YAML::Field(key: "name")]
+      # Release name
       getter name : String
 
       @[YAML::Field(key: "namespace")]
+      # Release namespace scope
       getter namespace : String
 
       @[YAML::Field(key: "revision")]
+      # Release revision
       getter revision : String
 
       @[YAML::Field(key: "updated")]
+      # Last updated
       getter updated : String
 
       @[YAML::Field(key: "status")]
+      # Status of the release
       getter status : String
 
       @[YAML::Field(key: "chart")]
+      # Chart name (including version)
       getter chart : String
 
       @[YAML::Field(key: "app_version")]
+      # Release application version
       getter app_version : String
 
       def extract_chart_version(name)
@@ -127,15 +139,19 @@ module Watcher::Helm
       include YAML::Serializable
 
       @[YAML::Field(key: "revision")]
+      # Revision number
       getter revision : UInt32
 
       @[YAML::Field(key: "updated")]
+      # Revision update date
       getter updated : String
 
       @[YAML::Field(key: "status")]
+      # Revision status
       getter status : String
 
       @[YAML::Field(key: "chart")]
+      # Revision chart name
       getter chart : String
 
       @[YAML::Field(key: "app_version")]
@@ -190,26 +206,32 @@ module Watcher::Helm
       getter api_version : String
 
       @[YAML::Field(key: "name")]
+      # Chart name
       getter name : String
 
       @[YAML::Field(key: "version")]
+      # Chart version
       getter version : String
 
       @[YAML::Field(key: "appVersion")]
+      # Application version
       getter app_version : String?
 
       @[YAML::Field(key: "description")]
       getter description : String?
 
       @[YAML::Field(key: "type")]
+      # Type of chart
       getter type : String?
 
       @[YAML::Field(key: "deprecated")]
       getter deprecated : Bool?
 
       @[YAML::Field(key: "created")]
+      # Date when chart was uploaded in the repository
       getter created : String
 
+      # Check if the current version is a pre-release
       def prerelease?
         !SemanticVersion.parse(@version).prerelease.identifiers.empty?
       end
@@ -219,9 +241,11 @@ module Watcher::Helm
       include YAML::Serializable
 
       @[YAML::Field(key: "apiVersion")]
+      # Index API version
       getter api_version : String
 
       @[YAML::Field(key: "entries")]
+      # List of entries in the repository
       getter entries : Hash(String, Array(Chart))
     end
   end
