@@ -15,6 +15,11 @@ jobs:
           - macos-latest
     
     steps:
+      - name: Additional macOS dependencies
+        if: contains(matrix.os, 'macos')
+        run: |
+          brew install yq
+
       - name: Get runner environment
         id: runner
         uses: msansoni/runner-environment-action@v1
