@@ -3,6 +3,7 @@ require "./helm"
 
 module Watcher
   class Command::Update
+    # Application configuration object
     getter config : Watcher::Config
 
     def initialize(@config)
@@ -10,6 +11,7 @@ module Watcher
       @log = Log.for(@config.name)
     end
 
+    # Runs the update process using the application configuration
     def run
       @log.info { "Checking for changes..." }
 
@@ -46,6 +48,7 @@ module Watcher
       @log.error { ex.message }
     end
 
+    # Retrieve the chart using the configured strategy
     private def get_chart
       entries = @helm.get_chart_entries(
         @config.source.chart,
