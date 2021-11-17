@@ -5,6 +5,55 @@ on:
     types: [published]
 
 jobs:
+  build:
+    runs-on: "${{matrix.os}}"
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    
+    steps:
+      - name: Get runner environment
+        id: runner
+        uses: msansoni/runner-environment-action@v1
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Update version
+        run: |
+          yq eval -i ".version = \"${{ github.event.release.tag_name }}\"" shard.yml
+          sed -i "s/VERSION = \".*\"/VERSION = \"${{ github.event.release.tag_name }}\"/" src/version.cr
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: 1.2.1
+      
+      - name: Install shards
+        run: shards install
+
+      - name: Build
+        if: contains(matrix.os, 'macos')
+        run: shards build --release --no-debug
+
+      - name: Build static
+        if: contains(matrix.os, 'ubuntu')
+        run: shards build --release --no-debug --static
+
+      - name: Upload application
+        id: upload
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./bin/watcher
+          asset_name: watcher-${{ steps.runner.outputs.platform }}-${{steps.runner.outputs.arch}}
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   docker:
     runs-on: ubuntu-latest
 
