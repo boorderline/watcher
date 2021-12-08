@@ -67,7 +67,7 @@ target:
 
 The development environment has the following requirements:
 
-- [minikibe](https://minikube.sigs.k8s.io/docs/) or an alternative, the Kubernetes version distributed with Docker seems to work fine.
+- [minikube](https://minikube.sigs.k8s.io/docs/) or an alternative, the Kubernetes version distributed with Docker seems to work fine.
 - [Helm](https://helm.sh/docs/intro/install/) (optional)
 - [Helm ChartMuseum plugin](https://github.com/chartmuseum/helm-push) (optional)
 
